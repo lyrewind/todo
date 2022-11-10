@@ -1,7 +1,7 @@
-use diesel::{prelude::*, insert_into};
+use diesel::prelude::*;
 use diesel::{PgConnection, RunQueryDsl, result::Error};
 
-use crate::models::{Task, NewTask};
+use crate::models::{Task, NewTask, PartialTask};
 
 pub struct TaskCreationData {
     pub title: String,
@@ -9,7 +9,13 @@ pub struct TaskCreationData {
     pub status_code: u8
 }
 
-pub async fn get_task(conn: &mut PgConnection, id_filter: i32) -> Result<Task, Error> {
+pub struct TaskUpdateData {
+    pub title: Option<String>,
+    pub details: Option<String>,
+    pub status_code: Option<i32>
+}
+
+pub async fn get_task(conn: &mut PgConnection, id_filter: &i32) -> Result<Task, Error> {
     use crate::schema::tasks::dsl::*;
 
     let result = tasks
@@ -47,7 +53,29 @@ pub async fn create_task(conn: &mut PgConnection, data: TaskCreationData) -> Res
         status_code: &data.status_code.into()
     };
 
-    insert_into(tasks::table)
+    diesel::insert_into(tasks::table)
         .values(&new_task)
+        .get_result(conn)
+}
+
+pub async fn delete_task(conn: &mut PgConnection, id_filter: &i32) -> Result<usize, Error> {
+    use crate::schema::tasks::dsl::*;
+
+    diesel::delete(tasks.filter(id.eq(id_filter)))
+        .execute(conn)
+}
+
+pub async fn update_task(conn: &mut PgConnection, id_filter: &i32, data: TaskUpdateData) -> Result<Task, Error> {
+    use crate::schema::tasks::dsl::*;
+
+    let task = PartialTask {
+        id: Some(*id_filter),
+        title: data.title,
+        details: data.details,
+        status_code: data.status_code
+    };
+
+    diesel::update(tasks)
+        .set(task)
         .get_result(conn)
 }

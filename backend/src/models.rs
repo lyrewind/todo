@@ -11,6 +11,15 @@ pub struct Task {
     pub status_code: i32
 }
 
+#[derive(AsChangeset)]
+#[diesel(table_name = tasks)]
+pub struct PartialTask {
+    pub id: Option<i32>,
+    pub title: Option<String>,
+    pub details: Option<String>,
+    pub status_code: Option<i32>
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = tasks)]
 pub struct NewTask<'a> {
