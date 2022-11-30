@@ -11,6 +11,7 @@ use controller::*;
 use actix_web::{
     HttpServer, App, web::Data
 };
+use actix_cors::Cors;
 
 use diesel::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -35,7 +36,10 @@ async fn main() -> io::Result<()> {
         .expect("Failed to create database pool.");
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+
         App::new()
+            .wrap(cors)
             .app_data(Data::new(pool.clone()))
             .service(index_tasks)
             .service(create_task)
